@@ -8,8 +8,8 @@ public class OnboardingSelection
     public List<WorkplacifyPreference> WorkplacifyPreferences { get; set; } = new();
     public string? TemporaryInviteCode { get; set; }
     public bool Submitted { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Writable onboarding selection fields.</summary>

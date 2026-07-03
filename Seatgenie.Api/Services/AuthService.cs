@@ -8,6 +8,7 @@ public interface IAuthService
     Task<SessionResponse?> GetSessionAsync(CancellationToken ct = default);
     Task<User?> GetMeAsync(CancellationToken ct = default);
     Task<User?> UpdateMeAsync(UserUpdate input, CancellationToken ct = default);
+    Task<SessionResponse?> GetUserAuthAsync(string? userId, CancellationToken ct = default);
 }
 
 public class AuthService : IAuthService
@@ -32,7 +33,21 @@ public class AuthService : IAuthService
         return new SessionResponse
         {
             User = user.ToDto(),
-            Expires = DateTimeOffset.UtcNow.AddDays(1),
+            Expires = DateTime.UtcNow.AddDays(1),
+        };
+    }
+
+    public async Task<SessionResponse?> GetUserAuthAsync(string? userId, CancellationToken ct = default)
+    {
+        if (userId is not { } id || await _users.GetByIdAsync(id, ct) is not { } user)
+        {
+            return null;
+        }
+
+        return new SessionResponse
+        {
+            User = user.ToDto(),
+            Expires = DateTime.UtcNow.AddDays(1),
         };
     }
 

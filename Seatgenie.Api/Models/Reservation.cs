@@ -6,8 +6,8 @@ public class ReservationInput
     public required string DeskId { get; set; }
     public DateOnly? Date { get; set; }
     public bool WholeDay { get; set; }
-    public DateTimeOffset? StartTime { get; set; }
-    public DateTimeOffset? EndTime { get; set; }
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
     public string? Timezone { get; set; }
 }
 

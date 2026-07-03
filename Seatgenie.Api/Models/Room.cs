@@ -7,8 +7,8 @@ public class Room
     public string? Name { get; set; }
     public string? Description { get; set; }
     public string? FloorId { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Writable room fields.</summary>

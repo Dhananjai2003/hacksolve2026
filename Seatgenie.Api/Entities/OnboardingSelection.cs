@@ -12,8 +12,8 @@ public class OnboardingSelection : IEntity, IAuditable
     public List<string> WorkplacifyPreferences { get; set; } = new();
     public string? TemporaryInviteCode { get; set; }
     public bool Submitted { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public User? User { get; set; }
 }

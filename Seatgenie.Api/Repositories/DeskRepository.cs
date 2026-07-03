@@ -36,7 +36,7 @@ public class DeskRepository : Repository<Desk>, IDeskRepository
             var pos = map[desk.Id];
             desk.X = pos.X;
             desk.Y = pos.Y;
-            desk.UpdatedAt = DateTimeOffset.UtcNow;
+            desk.UpdatedAt = DateTime.UtcNow;
         }
 
         await Db.SaveChangesAsync(ct);

@@ -8,8 +8,8 @@ public class Floor : IEntity, IAuditable
     public string? Description { get; set; }
     public string? FloorPlan { get; set; }
     public string? OfficeId { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public Office? Office { get; set; }
     public ICollection<Desk> Desks { get; set; } = new List<Desk>();
@@ -24,8 +24,8 @@ public class MeetingRoom : IEntity, IAuditable
     public string Name { get; set; } = default!;
     public string? Description { get; set; }
     public string FloorId { get; set; } = default!;
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public Floor? Floor { get; set; }
 }
@@ -37,8 +37,8 @@ public class OfficeRoom : IEntity, IAuditable
     public string Name { get; set; } = default!;
     public string? Description { get; set; }
     public string FloorId { get; set; } = default!;
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public Floor? Floor { get; set; }
 }

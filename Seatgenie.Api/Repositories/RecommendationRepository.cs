@@ -20,7 +20,7 @@ public class RecommendationRepository : Repository<DeskRecommendation>, IRecomme
 
         if (date is { } d)
         {
-            var start = new DateTimeOffset(d.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+            var start = new DateTime(d.ToDateTime(TimeOnly.MinValue).Ticks, DateTimeKind.Utc);
             var end = start.AddDays(1);
             query = query.Where(r => r.Date >= start && r.Date < end);
         }

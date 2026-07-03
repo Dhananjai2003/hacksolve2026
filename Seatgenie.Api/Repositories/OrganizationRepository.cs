@@ -25,7 +25,7 @@ public class OrganizationRepository : Repository<Organization>, IOrganizationRep
         }
 
         org.InviteCode = newInviteCode;
-        org.UpdatedAt = DateTimeOffset.UtcNow;
+        org.UpdatedAt = DateTime.UtcNow;
         await Db.SaveChangesAsync(ct);
         return org;
     }

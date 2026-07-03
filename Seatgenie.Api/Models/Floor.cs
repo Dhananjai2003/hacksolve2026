@@ -10,8 +10,8 @@ public class Floor
     /// <summary>Floor-plan image (URL or encoded data).</summary>
     public string? FloorPlan { get; set; }
     public string? OfficeId { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Floor including its desks.</summary>

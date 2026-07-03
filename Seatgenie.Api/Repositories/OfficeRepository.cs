@@ -57,7 +57,7 @@ public class OfficeRepository : Repository<Office>, IOfficeRepository
             return null;
         }
 
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.UtcNow;
         OfficeSetting entity;
         if (office.OfficeSettingId is not null &&
             await Db.OfficeSettings.FirstOrDefaultAsync(s => s.Id == office.OfficeSettingId, ct) is { } existing)
@@ -111,7 +111,7 @@ public class OfficeRepository : Repository<Office>, IOfficeRepository
             entity = new OfficeSettingWeekdaysAllowed { Id = Guid.NewGuid().ToString() };
             Db.OfficeSettingWeekdaysAllowed.Add(entity);
             setting.OfficeSettingWeekdaysAllowedId = entity.Id;
-            setting.UpdatedAt = DateTimeOffset.UtcNow;
+            setting.UpdatedAt = DateTime.UtcNow;
         }
 
         entity.AllowMonday = weekdays.AllowMonday;

@@ -21,9 +21,10 @@ public class AuthController : ApiControllerBase
 
     /// <summary>Begin sign-in. Delegated to the external identity provider (NextAuth / Entra).</summary>
     [HttpPost("/auth/signin")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public IActionResult SignIn([FromBody] SignInRequest request)
-        => Ok(new { message = "Sign-in is handled by the identity provider.", provider = request.Provider });
+    [ProducesResponseType(typeof(User), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Error), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SignIn([FromBody] SignInRequest request, CancellationToken ct)
+        => await _auth.GetUserAuthAsync(request.Provider, ct) is { } session ? Ok(session) : Unauthenticated();
 
     /// <summary>Sign out.</summary>
     [HttpPost("/auth/signout")]

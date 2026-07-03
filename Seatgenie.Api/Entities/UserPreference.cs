@@ -16,8 +16,8 @@ public class UserPreference : IEntity, IAuditable
     public bool PreferSaturday { get; set; }
     public bool PreferSunday { get; set; }
     public string? Notes { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public User? User { get; set; }
     public Office? PreferredOffice { get; set; }

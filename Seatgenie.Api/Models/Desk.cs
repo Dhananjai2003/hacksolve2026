@@ -10,8 +10,8 @@ public class Desk
     public string? FloorId { get; set; }
     public double X { get; set; }
     public double Y { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Writable desk fields.</summary>
@@ -37,13 +37,13 @@ public class DeskSchedule
     public string? Id { get; set; }
     public string? DeskId { get; set; }
     public string? UserId { get; set; }
-    public DateTimeOffset? Date { get; set; }
+    public DateTime? Date { get; set; }
     public string? Timezone { get; set; }
     public bool WholeDay { get; set; }
-    public DateTimeOffset? StartTime { get; set; }
-    public DateTimeOffset? EndTime { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>A desk schedule entry including the desk it references.</summary>
@@ -65,11 +65,11 @@ public class DeskRecommendation
     public string? Id { get; set; }
     public string? UserId { get; set; }
     public string? DeskId { get; set; }
-    public DateTimeOffset? Date { get; set; }
+    public DateTime? Date { get; set; }
     public double Score { get; set; }
     public string? Reason { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>A candidate desk with why-it-was-suggested context.</summary>

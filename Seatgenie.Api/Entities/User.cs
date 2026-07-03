@@ -8,7 +8,7 @@ public class User : IEntity
     public string Id { get; set; } = default!;
     public string? Name { get; set; }
     public string? Email { get; set; }
-    public DateTimeOffset? EmailVerified { get; set; }
+    public DateTime? EmailVerified { get; set; }
     public string? Image { get; set; }
     public string? OrganizationId { get; set; }
     public UserRole UserRole { get; set; } = UserRole.MEMBER;
@@ -50,7 +50,7 @@ public class Session : IEntity
     public string Id { get; set; } = default!;
     public string SessionToken { get; set; } = default!;
     public string UserId { get; set; } = default!;
-    public DateTimeOffset Expires { get; set; }
+    public DateTime Expires { get; set; }
 
     public User? User { get; set; }
 }
@@ -60,5 +60,5 @@ public class VerificationToken
 {
     public string Identifier { get; set; } = default!;
     public string Token { get; set; } = default!;
-    public DateTimeOffset Expires { get; set; }
+    public DateTime Expires { get; set; }
 }

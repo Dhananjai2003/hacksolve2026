@@ -47,7 +47,7 @@ public class AnalyticsRepository : IAnalyticsRepository
 
         var bookedByDay = bookings
             .Where(b => b.Date.HasValue)
-            .GroupBy(b => DateOnly.FromDateTime(b.Date!.Value.UtcDateTime))
+            .GroupBy(b => DateOnly.FromDateTime(b.Date!.Value))
             .ToDictionary(g => g.Key, g => g.Select(x => x.DeskId).Distinct().Count());
 
         var series = new List<UtilizationRow>(days);
@@ -82,6 +82,6 @@ public class AnalyticsRepository : IAnalyticsRepository
         return new PeopleHeadcount(total, byFloor);
     }
 
-    private static DateTimeOffset StartOfDay(DateOnly date)
-        => new(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+    private static DateTime StartOfDay(DateOnly date)
+        => new(date.ToDateTime(TimeOnly.MinValue).Ticks, DateTimeKind.Utc);
 }

@@ -4,7 +4,7 @@ namespace Seatgenie.Api.Models;
 public class SessionResponse
 {
     public User? User { get; set; }
-    public DateTimeOffset Expires { get; set; }
+    public DateTime Expires { get; set; }
 }
 
 /// <summary>Request body to begin sign-in.</summary>

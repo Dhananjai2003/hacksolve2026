@@ -27,7 +27,7 @@ public class OnboardingRepository : Repository<OnboardingSelection>, IOnboarding
         }
 
         onboarding.Submitted = true;
-        onboarding.UpdatedAt = DateTimeOffset.UtcNow;
+        onboarding.UpdatedAt = DateTime.UtcNow;
         await Db.SaveChangesAsync(ct);
         return true;
     }

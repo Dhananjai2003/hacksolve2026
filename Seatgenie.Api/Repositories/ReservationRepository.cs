@@ -9,7 +9,7 @@ namespace Seatgenie.Api.Repositories;
 public record DeskAvailabilityResult(Desk Desk, bool IsFree);
 
 /// <summary>The user's most-booked desk with supporting stats.</summary>
-public record FavoriteDeskResult(Desk Desk, int BookingCount, DateTimeOffset? LastBookedDate);
+public record FavoriteDeskResult(Desk Desk, int BookingCount, DateTime? LastBookedDate);
 
 public interface IReservationRepository : IRepository<DeskSchedule>
 {
@@ -60,7 +60,7 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
 
     public async Task<IReadOnlyList<DeskSchedule>> GetUpcomingForUserAsync(string userId, CancellationToken ct = default)
     {
-        var today = DateTimeOffset.UtcNow.Date;
+        var today = DateTime.UtcNow.Date;
         return await Set.AsNoTracking()
             .Where(s => s.UserId == userId && (s.Date == null || s.Date >= today))
             .OrderBy(s => s.Date)
@@ -76,7 +76,7 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
 
     public async Task<IReadOnlyList<DeskSchedule>> GetHistoryForUserAsync(string userId, int sinceDays, CancellationToken ct = default)
     {
-        var since = DateTimeOffset.UtcNow.AddDays(-sinceDays);
+        var since = DateTime.UtcNow.AddDays(-sinceDays);
         return await Set.AsNoTracking()
             .Include(s => s.Desk)
             .Where(s => s.UserId == userId && s.Date >= since)
@@ -86,7 +86,7 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
 
     public async Task<DeskSchedule?> GetLastBookingAsync(string userId, Weekday? weekday, CancellationToken ct = default)
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = DateTime.UtcNow;
         var query = Set.AsNoTracking()
             .Include(s => s.Desk)
             .Where(s => s.UserId == userId && s.Date != null && s.Date < now);
@@ -104,7 +104,7 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
 
     public async Task<FavoriteDeskResult?> GetFavoriteDeskAsync(string userId, int sinceDays, CancellationToken ct = default)
     {
-        var since = DateTimeOffset.UtcNow.AddDays(-sinceDays);
+        var since = DateTime.UtcNow.AddDays(-sinceDays);
 
         var top = await Set.AsNoTracking()
             .Where(s => s.UserId == userId && s.Date >= since)
@@ -128,9 +128,9 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
         return desk is null ? null : new FavoriteDeskResult(desk, top.Count, top.LastBooked);
     }
 
-    private static (DateTimeOffset Start, DateTimeOffset End) DayRange(DateOnly date)
+    private static (DateTime Start, DateTime End) DayRange(DateOnly date)
     {
-        var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var start = new DateTime(date.ToDateTime(TimeOnly.MinValue).Ticks, DateTimeKind.Utc);
         return (start, start.AddDays(1));
     }
 

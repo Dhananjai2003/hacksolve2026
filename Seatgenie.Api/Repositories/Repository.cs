@@ -30,7 +30,7 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
 
         if (entity is IAuditable auditable)
         {
-            var now = DateTimeOffset.UtcNow;
+            var now = DateTime.UtcNow;
             auditable.CreatedAt = now;
             auditable.UpdatedAt = now;
         }
@@ -50,7 +50,7 @@ public class Repository<T> : IRepository<T> where T : class, IEntity
         Db.Entry(existing).CurrentValues.SetValues(entity);
         if (existing is IAuditable auditable)
         {
-            auditable.UpdatedAt = DateTimeOffset.UtcNow;
+            auditable.UpdatedAt = DateTime.UtcNow;
         }
 
         await Db.SaveChangesAsync(ct);

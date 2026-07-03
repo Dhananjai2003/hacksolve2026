@@ -6,7 +6,7 @@ public class User
     public string? Id { get; set; }
     public string? Name { get; set; }
     public string? Email { get; set; }
-    public DateTimeOffset? EmailVerified { get; set; }
+    public DateTime? EmailVerified { get; set; }
     public string? Image { get; set; }
     public string? OrganizationId { get; set; }
     public UserRole UserRole { get; set; }
@@ -37,8 +37,8 @@ public class UserPreference
     public bool PreferSaturday { get; set; }
     public bool PreferSunday { get; set; }
     public string? Notes { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Writable per-user seating preferences.</summary>

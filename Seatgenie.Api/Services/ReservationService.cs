@@ -93,6 +93,6 @@ public class ReservationService : IReservationService
     public async Task<ConflictResult> CheckConflictAsync(string deskId, DateOnly date, CancellationToken ct = default)
         => new() { HasConflict = await _reservations.HasConflictAsync(deskId, date, ct) };
 
-    private static DateTimeOffset? ToStartOfDay(DateOnly? date)
-        => date is { } d ? new DateTimeOffset(d.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero) : null;
+    private static DateTime? ToStartOfDay(DateOnly? date)
+        => date is { } d ? new DateTime(d.ToDateTime(TimeOnly.MinValue).Ticks, DateTimeKind.Utc) : null;
 }

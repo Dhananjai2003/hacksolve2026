@@ -11,8 +11,8 @@ public class Office : IEntity, IAuditable
     public string Timezone { get; set; } = "Etc/GMT";
     public string? OrganizationId { get; set; }
     public string? OfficeSettingId { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public Organization? Organization { get; set; }
     public OfficeSetting? OfficeSetting { get; set; }
@@ -26,8 +26,8 @@ public class OfficeSetting : IEntity, IAuditable
     public bool AllowSchedulingInThePast { get; set; }
     public int? DurationSchedulingFuture { get; set; }
     public string? OfficeSettingWeekdaysAllowedId { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     public OfficeSettingWeekdaysAllowed? WeekdaysAllowed { get; set; }
     public ICollection<Office> Offices { get; set; } = new List<Office>();

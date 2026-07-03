@@ -13,8 +13,8 @@ public class Office
     public string? Timezone { get; set; }
     public string? OrganizationId { get; set; }
     public string? OfficeSettingId { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Office including its floors and desks.</summary>
@@ -53,8 +53,8 @@ public class OfficeSetting
     public bool AllowSchedulingInThePast { get; set; }
     public int? DurationSchedulingFuture { get; set; }
     public WeekdaysAllowed? WeekdaysAllowed { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }
 
 /// <summary>Writable office booking rules.</summary>

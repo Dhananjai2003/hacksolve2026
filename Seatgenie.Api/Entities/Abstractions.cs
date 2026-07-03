@@ -9,6 +9,6 @@ public interface IEntity
 /// <summary>An entity that tracks creation/update timestamps.</summary>
 public interface IAuditable
 {
-    DateTimeOffset CreatedAt { get; set; }
-    DateTimeOffset UpdatedAt { get; set; }
+    DateTime CreatedAt { get; set; }
+    DateTime UpdatedAt { get; set; }
 }
