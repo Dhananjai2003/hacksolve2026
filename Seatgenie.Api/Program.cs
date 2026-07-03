@@ -7,6 +7,19 @@ using Seatgenie.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Application Insights — telemetry + logs for post-deployment analytics.
+// Reads the connection string from ApplicationInsights:ConnectionString or the
+// APPLICATIONINSIGHTS_CONNECTION_STRING environment variable (set in Azure App Service).
+// Only registered when a connection string is present, so local/dev runs without one
+// still start cleanly.
+var appInsightsConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]
+    ?? builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+if (!string.IsNullOrWhiteSpace(appInsightsConnectionString))
+{
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+        options.ConnectionString = appInsightsConnectionString);
+}
+
 // EF Core (Azure Database for PostgreSQL) + repository layer.
 builder.Services.AddPersistence(builder.Configuration);
 

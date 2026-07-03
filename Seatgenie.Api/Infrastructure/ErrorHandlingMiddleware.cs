@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.ApplicationInsights;
 using Seatgenie.Api.Models;
 using Seatgenie.Api.Services;
 
@@ -21,6 +22,12 @@ public class ErrorHandlingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Attach the caller id so App Insights traces/exceptions carry a UserId dimension.
+        var userId = context.Request.Headers["X-User-Id"].FirstOrDefault();
+        using var scope = string.IsNullOrWhiteSpace(userId)
+            ? null
+            : _logger.BeginScope(new Dictionary<string, object> { ["UserId"] = userId });
+
         try
         {
             await _next(context);
@@ -35,6 +42,8 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
+            // Report to App Insights when configured (no-op otherwise).
+            context.RequestServices.GetService<TelemetryClient>()?.TrackException(ex);
             _logger.LogError(ex, "Unhandled exception");
             await WriteError(context, StatusCodes.Status500InternalServerError, "INTERNAL_ERROR", "An unexpected error occurred.");
         }
