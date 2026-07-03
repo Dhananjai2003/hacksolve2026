@@ -1,0 +1,21 @@
+@Seatgenie.Api_HostAddress = http://localhost:5041
+
+### OpenAPI document
+GET {{Seatgenie.Api_HostAddress}}/swagger/v1/swagger.json
+Accept: application/json
+
+### List offices (stub -> 501 Not Implemented)
+GET {{Seatgenie.Api_HostAddress}}/api/offices
+Accept: application/json
+
+### Book a desk (stub -> 501 Not Implemented)
+POST {{Seatgenie.Api_HostAddress}}/api/reservations
+Content-Type: application/json
+
+{
+  "deskId": "desk-112",
+  "date": "2026-07-06",
+  "wholeDay": true
+}
+
+###
