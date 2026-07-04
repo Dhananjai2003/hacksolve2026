@@ -22,7 +22,7 @@ public class Desk : IEntity, IAuditable
 public class DeskSchedule : IEntity, IAuditable
 {
     public string Id { get; set; } = default!;
-    public string DeskId { get; set; } = default!;
+    public string? DeskId { get; set; } = default!;
     public string? UserId { get; set; }
     public DateTime? Date { get; set; }
     public string Timezone { get; set; } = "Etc/GMT";
