@@ -11,6 +11,9 @@ public record DeskAvailabilityResult(Desk Desk, bool IsFree);
 /// <summary>The user's most-booked desk with supporting stats.</summary>
 public record FavoriteDeskResult(Desk Desk, int BookingCount, DateTime? LastBookedDate);
 
+/// <summary>A desk booked by a teammate, with its floor-plan position.</summary>
+public record TeamBookedDesk(string FloorId, double X, double Y);
+
 public interface IReservationRepository : IRepository<DeskSchedule>
 {
     Task<IReadOnlyList<DeskSchedule>> GetDeskScheduleAsync(string deskId, DateOnly? date, CancellationToken ct = default);
@@ -26,6 +29,9 @@ public interface IReservationRepository : IRepository<DeskSchedule>
 
     /// <summary>Id of the desk the user reserved most within [startInclusive, endExclusive); null if none.</summary>
     Task<string?> GetMostReservedDeskIdAsync(string userId, DateTime startInclusive, DateTime endExclusive, CancellationToken ct = default);
+
+    /// <summary>Desks booked on <paramref name="date"/> by users in the given service center, excluding one user.</summary>
+    Task<IReadOnlyList<TeamBookedDesk>> GetTeamBookedDesksAsync(int serviceId, string excludeUserId, DateOnly date, CancellationToken ct = default);
 }
 
 public class ReservationRepository : Repository<DeskSchedule>, IReservationRepository
@@ -154,6 +160,19 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
             .ThenByDescending(x => x.Last)
             .Select(x => x.DeskId)
             .FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<TeamBookedDesk>> GetTeamBookedDesksAsync(int serviceId, string excludeUserId, DateOnly date, CancellationToken ct = default)
+    {
+        var (start, end) = DayRange(date);
+        return await (
+            from s in Set.AsNoTracking()
+            join d in Db.Desks.AsNoTracking() on s.DeskId equals d.Id
+            join u in Db.Users.AsNoTracking() on s.UserId equals u.Id
+            where s.Date >= start && s.Date < end
+                && u.ServiceId == serviceId
+                && s.UserId != excludeUserId
+            select new TeamBookedDesk(d.FloorId, d.X, d.Y)).ToListAsync(ct);
+    }
 
     private static (DateTime Start, DateTime End) DayRange(DateOnly date)
     {

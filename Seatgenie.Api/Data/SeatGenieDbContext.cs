@@ -31,6 +31,7 @@ public class SeatGenieDbContext : DbContext
     public DbSet<DeskQuality> DeskQualities => Set<DeskQuality>();
     public DbSet<DeskQualityMapping> DeskQualityMappings => Set<DeskQualityMapping>();
     public DbSet<UserSeatPreference> UserSeatPreferences => Set<UserSeatPreference>();
+    public DbSet<ServiceCenterMapping> ServiceCenterMappings => Set<ServiceCenterMapping>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -52,6 +53,9 @@ public class SeatGenieDbContext : DbContext
             // application layer via the entity's property initializer.
             b.Property(x => x.UserRole)
                 .HasConversion<string>();
+
+            // Existing DB column is all-lowercase "serviceid" (not the snake_case default).
+            b.Property(x => x.ServiceId).HasColumnName("serviceid");
 
             b.HasOne(x => x.Organization)
                 .WithMany(o => o.Users)
@@ -192,6 +196,14 @@ public class SeatGenieDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.QualityId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ServiceCenterMapping>(b =>
+        {
+            b.ToTable("service_center_mapping");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.ServiceCenterName).HasColumnName("service_center_name");
         });
 
         modelBuilder.Entity<UserSeatPreference>(b =>
