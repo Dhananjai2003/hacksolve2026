@@ -13,6 +13,9 @@ public interface IDeskRepository : IRepository<Desk>
 
     /// <summary>Resolve a human seat label / public desk id (e.g. "112") to a desk.</summary>
     Task<Desk?> GetByPublicDeskIdAsync(string publicDeskId, CancellationToken ct = default);
+
+    /// <summary>Get a desk with its related floor and office information by desk ID.</summary>
+    Task<DeskWithFloorAndOffice?> GetDeskWithFloorAndOfficeAsync(string deskId, CancellationToken ct = default);
 }
 
 public class DeskRepository : Repository<Desk>, IDeskRepository
@@ -44,4 +47,32 @@ public class DeskRepository : Repository<Desk>, IDeskRepository
 
     public async Task<Desk?> GetByPublicDeskIdAsync(string publicDeskId, CancellationToken ct = default)
         => await Set.AsNoTracking().FirstOrDefaultAsync(d => d.PublicDeskId == publicDeskId, ct);
+
+    public async Task<DeskWithFloorAndOffice?> GetDeskWithFloorAndOfficeAsync(string deskId, CancellationToken ct = default)
+    {
+        var desk = await Set.AsNoTracking()
+            .Include(d => d.Floor)
+                .ThenInclude(f => f!.Office)
+            .FirstOrDefaultAsync(d => d.Id == deskId, ct);
+
+        if (desk == null)
+        {
+            return null;
+        }
+
+        return new DeskWithFloorAndOffice
+        {
+            Desk = desk,
+            Floor = desk.Floor,
+            Office = desk.Floor?.Office
+        };
+    }
+}
+
+/// <summary>Result containing a desk with its related floor and office information.</summary>
+public class DeskWithFloorAndOffice
+{
+    public required Desk Desk { get; init; }
+    public Floor? Floor { get; init; }
+    public Office? Office { get; init; }
 }
