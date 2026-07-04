@@ -42,6 +42,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IChatbotService, ChatbotService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
+        services.AddScoped<IUserSeatPreferenceService, UserSeatPreferenceService>();
+        services.AddScoped<IDeskQualityService, DeskQualityService>();
 
         return services;
     }

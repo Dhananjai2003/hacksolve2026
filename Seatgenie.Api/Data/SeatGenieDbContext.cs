@@ -29,6 +29,9 @@ public class SeatGenieDbContext : DbContext
     public DbSet<DeskRecommendation> DeskRecommendations => Set<DeskRecommendation>();
     public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
     public DbSet<OnboardingSelection> OnboardingSelections => Set<OnboardingSelection>();
+    public DbSet<DeskQuality> DeskQualities => Set<DeskQuality>();
+    public DbSet<DeskQualityMapping> DeskQualityMappings => Set<DeskQualityMapping>();
+    public DbSet<UserSeatPreference> UserSeatPreferences => Set<UserSeatPreference>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -163,6 +166,50 @@ public class SeatGenieDbContext : DbContext
                 .WithMany(f => f.Desks)
                 .HasForeignKey(x => x.FloorId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DeskQuality>(b =>
+        {
+            b.ToTable("desk_quality");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("quality_id");
+            b.Property(x => x.Name).HasColumnName("quality_name");
+        });
+
+        modelBuilder.Entity<DeskQualityMapping>(b =>
+        {
+            b.ToTable("desk_quality_mapping");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("mapping_id");
+            // One desk ↔ many qualities; no duplicate (desk, quality) pairs.
+            b.HasIndex(x => new { x.DeskId, x.QualityId }).IsUnique();
+
+            b.HasOne(x => x.Desk)
+                .WithMany(d => d.QualityMappings)
+                .HasForeignKey(x => x.DeskId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(x => x.Quality)
+                .WithMany()
+                .HasForeignKey(x => x.QualityId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UserSeatPreference>(b =>
+        {
+            b.ToTable("user_seat_preferences");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Id).HasColumnName("seat_preference_id");
+
+            b.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne(x => x.Quality)
+                .WithMany()
+                .HasForeignKey(x => x.QualityId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<DeskSchedule>(b =>

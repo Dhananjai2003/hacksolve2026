@@ -1,0 +1,38 @@
+trigger: none
+
+pr: none
+
+pool:
+  vmImage: 'windows-latest'
+
+parameters:
+- name: environment
+  type: string
+  default: dev
+  values:
+  - dev
+  - test
+  - prod
+
+variables:
+  azureServiceConnection: 'My-Service-Connection'
+  webAppName: 'my-webapp-name'
+
+steps:
+
+# Download artifact from the build pipeline
+- task: DownloadPipelineArtifact@2
+  displayName: Download Build Artifact
+  inputs:
+    buildType: current
+    artifactName: drop
+    targetPath: '$(Pipeline.Workspace)/drop'
+
+# Deploy to Azure Web App
+- task: AzureWebApp@1
+  displayName: Deploy to Azure Web App
+  inputs:
+    azureSubscription: 'subs-cg-cgihack-sandbox'
+    appType: 'webApp'
+    appName: 'seatgenieapi'
+    package: '$(Pipeline.Workspace)/drop/*/.zip'

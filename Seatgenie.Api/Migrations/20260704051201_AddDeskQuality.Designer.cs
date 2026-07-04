@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Seatgenie.Api.Data;
@@ -12,9 +13,11 @@ using Seatgenie.Api.Data;
 namespace Seatgenie.Api.Migrations
 {
     [DbContext(typeof(SeatGenieDbContext))]
-    partial class SeatGenieDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704051201_AddDeskQuality")]
+    partial class AddDeskQuality
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

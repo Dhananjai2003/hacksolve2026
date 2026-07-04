@@ -192,6 +192,8 @@ public static class Mappers
         Y = e.Y,
         CreatedAt = e.CreatedAt,
         UpdatedAt = e.UpdatedAt,
+        // Populated when QualityMappings is Include()-loaded; empty otherwise.
+        QualityIds = e.QualityMappings.Select(m => m.QualityId).ToList(),
     };
 
     public static Ent.Desk ToEntity(this DeskInput dto) => new()
@@ -313,6 +315,21 @@ public static class Mappers
         e.WorkplacifyPreferences = dto.WorkplacifyPreferences.Select(p => p.ToString()).ToList();
         e.TemporaryInviteCode = dto.TemporaryInviteCode;
     }
+
+    // ---------------------------------------------------------------- DeskQuality
+    public static DeskQuality ToDto(this Ent.DeskQuality e) => new()
+    {
+        QualityId = e.Id,
+        QualityName = e.Name,
+    };
+
+    // ---------------------------------------------------------------- UserSeatPreference
+    public static UserSeatPreference ToDto(this Ent.UserSeatPreference e) => new()
+    {
+        SeatPreferenceId = e.Id,
+        QualityId = e.QualityId,
+        QualityName = e.Quality?.Name,
+    };
 
     private static WorkplacifyPreference? ParsePreference(string value)
         => Enum.TryParse<WorkplacifyPreference>(value, out var parsed) ? parsed : null;

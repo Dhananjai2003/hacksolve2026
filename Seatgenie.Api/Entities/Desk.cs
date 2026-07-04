@@ -16,6 +16,7 @@ public class Desk : IEntity, IAuditable
     public Floor? Floor { get; set; }
     public ICollection<DeskSchedule> DeskSchedules { get; set; } = new List<DeskSchedule>();
     public ICollection<DeskRecommendation> DeskRecommendations { get; set; } = new List<DeskRecommendation>();
+    public ICollection<DeskQualityMapping> QualityMappings { get; set; } = new List<DeskQualityMapping>();
 }
 
 /// <summary>Desk booking / schedule entry (table: desk_schedule).</summary>

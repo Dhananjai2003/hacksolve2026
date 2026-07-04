@@ -12,6 +12,9 @@ public class Desk
     public double Y { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+
+    /// <summary>Quality ids mapped to this desk (from desk_quality_mapping).</summary>
+    public List<int> QualityIds { get; set; } = new();
 }
 
 /// <summary>Writable desk fields.</summary>
@@ -21,6 +24,12 @@ public class DeskInput
     public string? Description { get; set; }
     public double X { get; set; }
     public double Y { get; set; }
+
+    /// <summary>
+    /// Quality ids to map to this desk (one-to-many in desk_quality_mapping).
+    /// On update: null leaves existing mappings unchanged; an empty array clears them.
+    /// </summary>
+    public List<int>? QualityIds { get; set; }
 }
 
 /// <summary>A single desk position update for the floor-plan editor.</summary>

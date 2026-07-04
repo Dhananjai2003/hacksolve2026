@@ -25,5 +25,6 @@ public class FloorRepository : Repository<Floor>, IFloorRepository
     public async Task<Floor?> GetDetailAsync(string id, CancellationToken ct = default)
         => await Set.AsNoTracking()
             .Include(f => f.Desks)
+                .ThenInclude(d => d.QualityMappings)
             .FirstOrDefaultAsync(f => f.Id == id, ct);
 }

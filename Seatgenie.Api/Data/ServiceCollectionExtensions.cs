@@ -25,6 +25,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPreferenceRepository, PreferenceRepository>();
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddScoped<IOnboardingRepository, OnboardingRepository>();
+        services.AddScoped<IUserSeatPreferenceRepository, UserSeatPreferenceRepository>();
+        services.AddScoped<IDeskQualityRepository, DeskQualityRepository>();
 
         return services;
     }
