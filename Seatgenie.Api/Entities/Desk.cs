@@ -15,7 +15,6 @@ public class Desk : IEntity, IAuditable
 
     public Floor? Floor { get; set; }
     public ICollection<DeskSchedule> DeskSchedules { get; set; } = new List<DeskSchedule>();
-    public ICollection<DeskRecommendation> DeskRecommendations { get; set; } = new List<DeskRecommendation>();
     public ICollection<DeskQualityMapping> QualityMappings { get; set; } = new List<DeskQualityMapping>();
 }
 
@@ -35,20 +34,4 @@ public class DeskSchedule : IEntity, IAuditable
 
     public Desk? Desk { get; set; }
     public User? User { get; set; }
-}
-
-/// <summary>Persisted desk recommendation from the engine (table: desk_recommendation).</summary>
-public class DeskRecommendation : IEntity, IAuditable
-{
-    public string Id { get; set; } = default!;
-    public string UserId { get; set; } = default!;
-    public string DeskId { get; set; } = default!;
-    public DateTime? Date { get; set; }
-    public double Score { get; set; }
-    public string? Reason { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-
-    public User? User { get; set; }
-    public Desk? Desk { get; set; }
 }

@@ -13,7 +13,6 @@ public static class ServiceCollectionExtensions
         services.AddDbContext<SeatGenieDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IOrganizationRepository, OrganizationRepository>();
         services.AddScoped<IOfficeRepository, OfficeRepository>();
         services.AddScoped<IFloorRepository, FloorRepository>();
@@ -23,7 +22,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IReservationRepository, ReservationRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IPreferenceRepository, PreferenceRepository>();
-        services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddScoped<IOnboardingRepository, OnboardingRepository>();
         services.AddScoped<IUserSeatPreferenceRepository, UserSeatPreferenceRepository>();
         services.AddScoped<IDeskQualityRepository, DeskQualityRepository>();

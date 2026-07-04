@@ -26,7 +26,6 @@ public class SeatGenieDbContext : DbContext
     public DbSet<OfficeRoom> OfficeRooms => Set<OfficeRoom>();
     public DbSet<Desk> Desks => Set<Desk>();
     public DbSet<DeskSchedule> DeskSchedules => Set<DeskSchedule>();
-    public DbSet<DeskRecommendation> DeskRecommendations => Set<DeskRecommendation>();
     public DbSet<UserPreference> UserPreferences => Set<UserPreference>();
     public DbSet<OnboardingSelection> OnboardingSelections => Set<OnboardingSelection>();
     public DbSet<DeskQuality> DeskQualities => Set<DeskQuality>();
@@ -229,23 +228,6 @@ public class SeatGenieDbContext : DbContext
                 .WithMany(u => u.DeskSchedules)
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
-        });
-
-        modelBuilder.Entity<DeskRecommendation>(b =>
-        {
-            b.ToTable("desk_recommendation");
-            b.HasKey(x => x.Id);
-            b.Property(x => x.Score).HasDefaultValue(0d);
-
-            b.HasOne(x => x.User)
-                .WithMany(u => u.DeskRecommendations)
-                .HasForeignKey(x => x.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            b.HasOne(x => x.Desk)
-                .WithMany(d => d.DeskRecommendations)
-                .HasForeignKey(x => x.DeskId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<UserPreference>(b =>
