@@ -23,13 +23,14 @@ public class Desk : IEntity, IAuditable
 public class DeskSchedule : IEntity, IAuditable
 {
     public string Id { get; set; } = default!;
-    public string DeskId { get; set; } = default!;
+    public string? DeskId { get; set; } = default!;
     public string? UserId { get; set; }
     public DateTime? Date { get; set; }
     public string Timezone { get; set; } = "Etc/GMT";
     public bool WholeDay { get; set; }
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }
+    public string? NotifyEventId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 

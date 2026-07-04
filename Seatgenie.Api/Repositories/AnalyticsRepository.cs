@@ -41,7 +41,9 @@ public class AnalyticsRepository : IAnalyticsRepository
         var end = StartOfDay(today.AddDays(1));
 
         var bookings = await _db.DeskSchedules.AsNoTracking()
-            .Where(s => s.Date >= start && s.Date < end && deskIds.Contains(s.DeskId))
+            .Where(s => s.Date >= start && s.Date < end 
+                && s.DeskId != null 
+                && deskIds.Contains(s.DeskId))
             .Select(s => new { s.DeskId, s.Date })
             .ToListAsync(ct);
 

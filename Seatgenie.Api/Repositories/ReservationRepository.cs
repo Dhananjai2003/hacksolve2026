@@ -49,7 +49,9 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
             .ToListAsync(ct);
 
         var bookedDeskIds = await Set.AsNoTracking()
-            .Where(s => s.Date >= start && s.Date < end && desks.Select(d => d.Id).Contains(s.DeskId))
+            .Where(s => s.Date >= start && s.Date < end 
+                && s.DeskId != null 
+                && desks.Select(d => d.Id).Contains(s.DeskId))
             .Select(s => s.DeskId)
             .Distinct()
             .ToListAsync(ct);

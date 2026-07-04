@@ -82,29 +82,42 @@ public class ReservationService : IReservationService
 
         var created = await _reservations.AddAsync(entity, ct);
 
-        // Get desk with floor and office information
-        var deskDetails = await _deskRepository.GetDeskWithFloorAndOfficeAsync(input.DeskId, ct);
-        var user = await _userRepository.GetByIdAsync(userId, ct);
+        // Only send notification if DeskId is provided
+        if (!string.IsNullOrEmpty(input.DeskId))
+        {
+            // Get desk with floor and office information
+            var deskDetails = await _deskRepository.GetDeskWithFloorAndOfficeAsync(input.DeskId, ct);
+            var user = await _userRepository.GetByIdAsync(userId, ct);
 
-        // Send booking notification via HTTP POST
-        var deskName = deskDetails?.Desk.Name ?? deskDetails?.Desk.PublicDeskId ?? input.DeskId;
-        var floorName = deskDetails?.Floor?.Name;
-        var officeName = deskDetails?.Office?.Name;
+            // Send booking notification via HTTP POST
+            var deskName = deskDetails?.Desk.Name ?? deskDetails?.Desk.PublicDeskId ?? input.DeskId;
+            var floorName = deskDetails?.Floor?.Name;
+            var officeName = deskDetails?.Office?.Name;
 
-        await SendBookingNotificationAsync(
-            deskName, 
-            floorName, 
-            officeName, 
-            created.Date, 
-            userId, 
-            user?.Email, 
-            "Created", 
-            ct);
+            // Send notification and get event ID
+            var eventId = await SendBookingNotificationAsync(
+                deskName, 
+                floorName, 
+                officeName, 
+                created.Date, 
+                userId, 
+                user?.Email, 
+                "Created",
+                null, // No event ID for create
+                ct); ;
+
+            // Update the booking with the event ID from notification API
+            if (!string.IsNullOrEmpty(eventId))
+            {
+                created.NotifyEventId = eventId;
+                await _reservations.UpdateAsync(created, ct);
+            }
+        }
 
         return created.ToDto();
     }
 
-    private async Task SendBookingNotificationAsync(
+    private async Task<string?> SendBookingNotificationAsync(
         string deskName, 
         string? floorName, 
         string? officeName, 
@@ -112,6 +125,7 @@ public class ReservationService : IReservationService
         string userId, 
         string? userEmail,
         string status,
+        string? eventId,
         CancellationToken ct)
     {
         try
@@ -126,22 +140,27 @@ public class ReservationService : IReservationService
                 BookingDateTime = bookingDateTime ?? DateTime.UtcNow,
                 UserId = userId,
                 UserEmail = userEmail ?? "unknown@example.com",
-                Status = status
+                Status = status,
+                EventId = eventId ?? string.Empty
             };
 
-            var response = await httpClient.PostAsJsonAsync("https://e5a503132f76e9f089421d9ff3ed6a.5a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/33970fed29c444c69266670a2e622572/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=f5ySfheuWdLQ7h_cpnqwHHFH7q2ymjdMMm5dREA9zfk", payload, ct);
+            var response = await httpClient.PostAsJsonAsync("https://e5a503132f76e9f089421d9ff3ed6a.5a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/650534bc160b4b73b14b4ca8979e5178/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=xUTZ_S3ZYMmurTw-oYlYxg1np3TIBoqoEGDRhEaarYs", payload, ct);
 
-            // Optionally log the response status
-            if (!response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                // Log warning but don't fail the booking
+                var notificationResponse = await response.Content.ReadFromJsonAsync<NotificationApiResponse>(ct);
+                return notificationResponse?.EventId;
+            }
+            else
+            {
                 Console.WriteLine($"Booking notification failed with status: {response.StatusCode}");
+                return null;
             }
         }
         catch (Exception ex)
         {
-            // Log error but don't fail the booking
             Console.WriteLine($"Error sending booking notification: {ex.Message}");
+            return null;
         }
     }
 
@@ -163,24 +182,29 @@ public class ReservationService : IReservationService
 
         var updated = await _reservations.UpdateAsync(schedule, ct);
 
-        // Get desk details and user information
-        var deskDetails = await _deskRepository.GetDeskWithFloorAndOfficeAsync(input.DeskId, ct);
-        var user = await _userRepository.GetByIdAsync(userId, ct);
+        // Only send notification if DeskId is provided
+        if (!string.IsNullOrEmpty(input.DeskId))
+        {
+            // Get desk details and user information
+            var deskDetails = await _deskRepository.GetDeskWithFloorAndOfficeAsync(input.DeskId, ct);
+            var user = await _userRepository.GetByIdAsync(userId, ct);
 
-        // Send update notification
-        var deskName = deskDetails?.Desk.Name ?? deskDetails?.Desk.PublicDeskId ?? input.DeskId;
-        var floorName = deskDetails?.Floor?.Name;
-        var officeName = deskDetails?.Office?.Name;
+            // Send update notification with existing event ID
+            var deskName = deskDetails?.Desk.Name ?? deskDetails?.Desk.PublicDeskId ?? input.DeskId;
+            var floorName = deskDetails?.Floor?.Name;
+            var officeName = deskDetails?.Office?.Name;
 
-        await SendBookingNotificationAsync(
-            deskName, 
-            floorName, 
-            officeName, 
-            schedule.Date, 
-            userId, 
-            user?.Email, 
-            "Updated", 
-            ct);
+            await SendBookingNotificationAsync(
+                deskName, 
+                floorName, 
+                officeName, 
+                schedule.Date, 
+                userId, 
+                user?.Email, 
+                "Updated",
+                schedule.NotifyEventId, // Pass existing event ID
+                ct);
+        }
 
         return updated?.ToDto();
     }
@@ -197,17 +221,18 @@ public class ReservationService : IReservationService
         var userId = schedule.UserId ?? "unknown";
         var deskId = schedule.DeskId;
         var bookingDate = schedule.Date;
+        var notifyEventId = schedule.NotifyEventId;
 
         // Delete the booking
         var deleted = await _reservations.DeleteAsync(id, ct);
 
-        if (deleted)
+        if (deleted && !string.IsNullOrEmpty(deskId))
         {
             // Get desk details and user information for notification
             var deskDetails = await _deskRepository.GetDeskWithFloorAndOfficeAsync(deskId, ct);
             var user = await _userRepository.GetByIdAsync(userId, ct);
 
-            // Send cancellation notification
+            // Send cancellation notification with existing event ID
             var deskName = deskDetails?.Desk.Name ?? deskDetails?.Desk.PublicDeskId ?? deskId;
             var floorName = deskDetails?.Floor?.Name;
             var officeName = deskDetails?.Office?.Name;
@@ -219,7 +244,8 @@ public class ReservationService : IReservationService
                 bookingDate, 
                 userId, 
                 user?.Email, 
-                "Cancelled", 
+                "Cancelled",
+                notifyEventId, // Pass existing event ID
                 ct);
         }
 
@@ -256,4 +282,20 @@ internal record BookingNotificationPayload
 
     [JsonPropertyName("status")]
     public required string Status { get; init; }
+
+    [JsonPropertyName("eventId")]
+    public string? EventId { get; init; }
+}
+
+/// <summary>Response from notification API.</summary>
+internal record NotificationApiResponse
+{
+    [JsonPropertyName("status")]
+    public string? Status { get; init; }
+
+    [JsonPropertyName("action")]
+    public string? Action { get; init; }
+
+    [JsonPropertyName("eventId")]
+    public string? EventId { get; init; }
 }
