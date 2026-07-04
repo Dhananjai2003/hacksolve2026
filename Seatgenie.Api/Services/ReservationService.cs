@@ -62,12 +62,23 @@ public class ReservationService : IReservationService
 
     public async Task<DeskSchedule> BookAsync(ReservationInput input, CancellationToken ct = default)
     {
-        if (input.Date is { } date && await _reservations.HasConflictAsync(input.DeskId, date, ct))
-        {
-            throw new BookingConflictException($"Desk {input.DeskId} is already booked on {date:yyyy-MM-dd}.");
-        }
-
         var userId = _currentUser.RequireUserId();
+
+        if (input.Date is { } date)
+        {
+            var formattedDate = date.ToString("yyyy-MM-dd");
+
+            // One booking per user per day.
+            if (await _reservations.HasUserReservationOnDateAsync(userId, date, null, ct))
+            {
+                throw new BookingConflictException($"You already have a booking on {formattedDate}. Only one booking per day is allowed.");
+            }
+
+            if (await _reservations.HasConflictAsync(input.DeskId, date, ct))
+            {
+                throw new BookingConflictException($"Desk {input.DeskId} is already booked on {formattedDate}.");
+            }
+        }
 
         var entity = new Ent.DeskSchedule
         {
@@ -172,6 +183,12 @@ public class ReservationService : IReservationService
         }
 
         var userId = schedule.UserId ?? _currentUser.RequireUserId();
+
+        // One booking per user per day (ignore this reservation itself).
+        if (input.Date is { } date && await _reservations.HasUserReservationOnDateAsync(userId, date, id, ct))
+        {
+            throw new BookingConflictException($"You already have a booking on {date:yyyy-MM-dd}. Only one booking per day is allowed.");
+        }
 
         schedule.DeskId = input.DeskId;
         schedule.Date = ToStartOfDay(input.Date);

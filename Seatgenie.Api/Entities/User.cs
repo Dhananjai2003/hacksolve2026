@@ -21,7 +21,6 @@ public class User : IEntity
     public OnboardingSelection? OnboardingSelection { get; set; }
     public UserPreference? UserPreference { get; set; }
     public ICollection<DeskSchedule> DeskSchedules { get; set; } = new List<DeskSchedule>();
-    public ICollection<DeskRecommendation> DeskRecommendations { get; set; } = new List<DeskRecommendation>();
 }
 
 /// <summary>OAuth / provider account linked to a user (table: account, NextAuth).</summary>

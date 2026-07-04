@@ -69,19 +69,6 @@ public class DeskAvailability
     public bool IsFree { get; set; }
 }
 
-/// <summary>A persisted desk suggestion from the recommendation engine.</summary>
-public class DeskRecommendation
-{
-    public string? Id { get; set; }
-    public string? UserId { get; set; }
-    public string? DeskId { get; set; }
-    public DateTime? Date { get; set; }
-    public double Score { get; set; }
-    public string? Reason { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-
 /// <summary>A candidate desk with why-it-was-suggested context.</summary>
 public class DeskSuggestion
 {

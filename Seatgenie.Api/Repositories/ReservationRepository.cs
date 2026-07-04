@@ -17,9 +17,15 @@ public interface IReservationRepository : IRepository<DeskSchedule>
     Task<IReadOnlyList<DeskAvailabilityResult>> GetFloorAvailabilityAsync(string floorId, DateOnly date, CancellationToken ct = default);
     Task<IReadOnlyList<DeskSchedule>> GetUpcomingForUserAsync(string userId, CancellationToken ct = default);
     Task<bool> HasConflictAsync(string deskId, DateOnly date, CancellationToken ct = default);
+
+    /// <summary>True if the user already has a reservation on the given day (optionally excluding one reservation id).</summary>
+    Task<bool> HasUserReservationOnDateAsync(string userId, DateOnly date, string? excludeReservationId = null, CancellationToken ct = default);
     Task<IReadOnlyList<DeskSchedule>> GetHistoryForUserAsync(string userId, int sinceDays, CancellationToken ct = default);
     Task<DeskSchedule?> GetLastBookingAsync(string userId, Weekday? weekday, CancellationToken ct = default);
     Task<FavoriteDeskResult?> GetFavoriteDeskAsync(string userId, int sinceDays, CancellationToken ct = default);
+
+    /// <summary>Id of the desk the user reserved most within [startInclusive, endExclusive); null if none.</summary>
+    Task<string?> GetMostReservedDeskIdAsync(string userId, DateTime startInclusive, DateTime endExclusive, CancellationToken ct = default);
 }
 
 public class ReservationRepository : Repository<DeskSchedule>, IReservationRepository
@@ -76,6 +82,15 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
             .AnyAsync(s => s.DeskId == deskId && s.Date >= start && s.Date < end, ct);
     }
 
+    public async Task<bool> HasUserReservationOnDateAsync(string userId, DateOnly date, string? excludeReservationId = null, CancellationToken ct = default)
+    {
+        var (start, end) = DayRange(date);
+        return await Set.AsNoTracking()
+            .AnyAsync(s => s.UserId == userId
+                && s.Date >= start && s.Date < end
+                && (excludeReservationId == null || s.Id != excludeReservationId), ct);
+    }
+
     public async Task<IReadOnlyList<DeskSchedule>> GetHistoryForUserAsync(string userId, int sinceDays, CancellationToken ct = default)
     {
         var since = DateTime.UtcNow.AddDays(-sinceDays);
@@ -129,6 +144,16 @@ public class ReservationRepository : Repository<DeskSchedule>, IReservationRepos
         var desk = await Db.Desks.AsNoTracking().FirstOrDefaultAsync(d => d.Id == top.DeskId, ct);
         return desk is null ? null : new FavoriteDeskResult(desk, top.Count, top.LastBooked);
     }
+
+    public async Task<string?> GetMostReservedDeskIdAsync(string userId, DateTime startInclusive, DateTime endExclusive, CancellationToken ct = default)
+        => await Set.AsNoTracking()
+            .Where(s => s.UserId == userId && s.Date >= startInclusive && s.Date < endExclusive)
+            .GroupBy(s => s.DeskId)
+            .Select(g => new { DeskId = g.Key, Count = g.Count(), Last = g.Max(s => s.Date) })
+            .OrderByDescending(x => x.Count)
+            .ThenByDescending(x => x.Last)
+            .Select(x => x.DeskId)
+            .FirstOrDefaultAsync(ct);
 
     private static (DateTime Start, DateTime End) DayRange(DateOnly date)
     {

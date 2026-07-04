@@ -242,19 +242,6 @@ public static class Mappers
         Desk = e.Desk?.ToDto(),
     };
 
-    // ---------------------------------------------------------------- Recommendation
-    public static DeskRecommendation ToDto(this Ent.DeskRecommendation e) => new()
-    {
-        Id = e.Id,
-        UserId = e.UserId,
-        DeskId = e.DeskId,
-        Date = e.Date,
-        Score = e.Score,
-        Reason = e.Reason,
-        CreatedAt = e.CreatedAt,
-        UpdatedAt = e.UpdatedAt,
-    };
-
     // ---------------------------------------------------------------- UserPreference
     public static UserPreference ToDto(this Ent.UserPreference e) => new()
     {
