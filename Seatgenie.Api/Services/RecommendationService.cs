@@ -1,5 +1,6 @@
 using Seatgenie.Api.Models;
 using Seatgenie.Api.Repositories;
+using Ent = Seatgenie.Api.Entities;
 
 namespace Seatgenie.Api.Services;
 
@@ -12,6 +13,13 @@ public interface IRecommendationService
     /// seat when the user has no history or no preferences. Every returned desk is free today.
     /// </summary>
     Task<IReadOnlyList<DeskAvailability>> GetMyRecommendationsAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Seats free today nearest to my teammates (users in my service center) who are booked today.
+    /// Proximity is computed per floor from desk x/y; ranked by distance to the closest teammate,
+    /// then by distance to the team's centroid. Returns up to <paramref name="limit"/> suggestions.
+    /// </summary>
+    Task<IReadOnlyList<DeskSuggestion>> GetSeatsNearMyTeamAsync(int limit, CancellationToken ct = default);
 }
 
 public class RecommendationService : IRecommendationService
@@ -130,6 +138,73 @@ public class RecommendationService : IRecommendationService
 
         // Nothing personalised was available → fall back to the first available seat.
         return ToSuggestions(orderedIds.Count > 0 ? orderedIds : [firstAvailableId]);
+    }
+
+    public async Task<IReadOnlyList<DeskSuggestion>> GetSeatsNearMyTeamAsync(int limit, CancellationToken ct = default)
+    {
+        if (limit <= 0)
+        {
+            limit = 5;
+        }
+
+        var userId = _currentUser.RequireUserId();
+
+        // Team = users sharing my service center. No service center → no team.
+        if (await _users.GetByIdAsync(userId, ct) is not { ServiceId: { } serviceId })
+        {
+            return [];
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var teammateDesks = await _reservations.GetTeamBookedDesksAsync(serviceId, userId, today, ct);
+        if (teammateDesks.Count == 0)
+        {
+            return [];
+        }
+
+        // Rank free desks by proximity to teammates, per floor (x/y are floor-plan coords).
+        var candidates = new List<(Ent.Desk Desk, double MinDistance, double CentroidDistance)>();
+        foreach (var floorGroup in teammateDesks.GroupBy(t => t.FloorId))
+        {
+            var teammates = floorGroup.ToList();
+            var centroidX = teammates.Average(t => t.X);
+            var centroidY = teammates.Average(t => t.Y);
+
+            foreach (var slot in await _reservations.GetFloorAvailabilityAsync(floorGroup.Key, today, ct))
+            {
+                if (!slot.IsFree)
+                {
+                    continue;
+                }
+
+                var desk = slot.Desk;
+                var minDistance = teammates.Min(t => Distance(desk.X, desk.Y, t.X, t.Y));
+                var centroidDistance = Distance(desk.X, desk.Y, centroidX, centroidY);
+                candidates.Add((desk, minDistance, centroidDistance));
+            }
+        }
+
+        return candidates
+            .OrderBy(c => c.MinDistance)          // nearest single teammate
+            .ThenBy(c => c.CentroidDistance)      // fall back to nearest to the team centroid
+            .ThenBy(c => c.Desk.PublicDeskId)
+            .Take(limit)
+            .Select(c => new DeskSuggestion
+            {
+                Desk = c.Desk.ToDto(),
+                IsFree = true,
+                DistanceMeters = Math.Round(c.MinDistance, 2),
+                Score = 1.0 / (1.0 + c.MinDistance),
+                Reason = $"Near your team — {Math.Round(c.MinDistance, 1)} from your nearest teammate",
+            })
+            .ToList();
+    }
+
+    private static double Distance(double x1, double y1, double x2, double y2)
+    {
+        var dx = x1 - x2;
+        var dy = y1 - y2;
+        return Math.Sqrt((dx * dx) + (dy * dy));
     }
 
     /// <summary>[first day of last month 00:00 UTC, first day of this month 00:00 UTC).</summary>

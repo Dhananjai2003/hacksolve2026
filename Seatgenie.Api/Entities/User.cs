@@ -14,6 +14,9 @@ public class User : IEntity
     public UserRole UserRole { get; set; } = UserRole.MEMBER;
     public string? CurrentOfficeId { get; set; }
 
+    /// <summary>serviceid — service center id (FK to service_center_mapping.id).</summary>
+    public int? ServiceId { get; set; }
+
     public Organization? Organization { get; set; }
     public Office? CurrentOffice { get; set; }
     public ICollection<Account> Accounts { get; set; } = new List<Account>();

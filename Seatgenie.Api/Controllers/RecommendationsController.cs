@@ -21,4 +21,13 @@ public class RecommendationsController : ApiControllerBase
     [ProducesResponseType(typeof(IEnumerable<DeskAvailability>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyRecommendations(CancellationToken ct)
         => Ok(await _recommendations.GetMyRecommendationsAsync(ct));
+
+    /// <summary>
+    /// Seats near my team: desks free today nearest to teammates (users in my service center)
+    /// who are booked today, ranked by proximity (nearest teammate, then team centroid).
+    /// </summary>
+    [HttpGet("/me/recommendations/near-team")]
+    [ProducesResponseType(typeof(IEnumerable<DeskSuggestion>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SeatsNearMyTeam([FromQuery] int limit = 5, CancellationToken ct = default)
+        => Ok(await _recommendations.GetSeatsNearMyTeamAsync(limit, ct));
 }
