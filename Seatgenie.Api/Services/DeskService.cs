@@ -27,6 +27,8 @@ public class DeskService : IDeskService
 
     public async Task<Desk> CreateAsync(string floorId, DeskInput input, CancellationToken ct = default)
     {
+        await ValidateQualityIdsAsync(input.QualityIds, ct);
+
         var entity = input.ToEntity();
         entity.FloorId = floorId;
 
@@ -36,7 +38,15 @@ public class DeskService : IDeskService
             : input.Name!;
 
         var created = await _desks.AddAsync(entity, ct);
-        return created.ToDto();
+
+        if (input.QualityIds is { Count: > 0 })
+        {
+            await _desks.ReplaceQualitiesAsync(created.Id, input.QualityIds, ct);
+        }
+
+        var dto = created.ToDto();
+        dto.QualityIds = input.QualityIds?.Distinct().ToList() ?? [];
+        return dto;
     }
 
     public Task UpdatePositionsAsync(string floorId, IEnumerable<DeskPosition> positions, CancellationToken ct = default)
@@ -47,10 +57,12 @@ public class DeskService : IDeskService
             ct);
 
     public async Task<Desk?> GetAsync(string id, CancellationToken ct = default)
-        => await _desks.GetByIdAsync(id, ct) is { } desk ? desk.ToDto() : null;
+        => await _desks.GetWithQualitiesAsync(id, ct) is { } desk ? desk.ToDto() : null;
 
     public async Task<Desk?> UpdateAsync(string id, DeskInput input, CancellationToken ct = default)
     {
+        await ValidateQualityIdsAsync(input.QualityIds, ct);
+
         if (await _desks.GetByIdAsync(id, ct) is not { } desk)
         {
             return null;
@@ -58,9 +70,37 @@ public class DeskService : IDeskService
 
         input.Apply(desk);
         await _desks.UpdateAsync(desk, ct);
-        return desk.ToDto();
+
+        // null => leave mappings unchanged; [] => clear; non-empty => replace.
+        if (input.QualityIds is not null)
+        {
+            await _desks.ReplaceQualitiesAsync(id, input.QualityIds, ct);
+        }
+
+        var dto = desk.ToDto();
+        dto.QualityIds = input.QualityIds is not null
+            ? input.QualityIds.Distinct().ToList()
+            : (await _desks.GetQualityIdsAsync(id, ct)).ToList();
+        return dto;
     }
 
     public Task<bool> DeleteAsync(string id, CancellationToken ct = default)
         => _desks.DeleteAsync(id, ct);
+
+    /// <summary>Rejects the request (400) if any supplied quality id is not in desk_quality.</summary>
+    private async Task ValidateQualityIdsAsync(List<int>? qualityIds, CancellationToken ct)
+    {
+        if (qualityIds is not { Count: > 0 })
+        {
+            return;
+        }
+
+        var requested = qualityIds.Distinct().ToList();
+        var known = await _desks.GetKnownQualityIdsAsync(requested, ct);
+        var missing = requested.Except(known).ToList();
+        if (missing.Count > 0)
+        {
+            throw new ValidationException($"Unknown quality id(s): {string.Join(", ", missing)}.");
+        }
+    }
 }

@@ -34,6 +34,7 @@ public class OfficeRepository : Repository<Office>, IOfficeRepository
         => await Set.AsNoTracking()
             .Include(o => o.Floors)
                 .ThenInclude(f => f.Desks)
+                    .ThenInclude(d => d.QualityMappings)
             .FirstOrDefaultAsync(o => o.Id == id, ct);
 
     public async Task<OfficeSetting?> GetSettingsAsync(string officeId, CancellationToken ct = default)
