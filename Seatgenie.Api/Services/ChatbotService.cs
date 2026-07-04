@@ -13,6 +13,7 @@ public interface IChatbotService
     Task<FavoriteDesk?> GetFavoriteDeskAsync(int sinceDays, CancellationToken ct = default);
     Task<DeskScheduleWithDesk?> GetLastBookingAsync(Weekday? weekday, CancellationToken ct = default);
     Task<IReadOnlyList<DeskSuggestion>> GetTeamDesksAsync(DateOnly date, string? colleagueId, int limit, CancellationToken ct = default);
+    Task<IReadOnlyList<DeskSuggestion>> GetFreeDesksFromOfficeAsync(string officeId, DateOnly date, int limit, CancellationToken ct = default);
     Task<DeskLookupResult?> LookupDeskAsync(string seatNumber, DateOnly date, bool fallbackToAvailable, CancellationToken ct = default);
     Task<IReadOnlyList<DeskScheduleWithDesk>> GetBookingHistoryAsync(int sinceDays, CancellationToken ct = default);
 }
@@ -24,19 +25,25 @@ public class ChatbotService : IChatbotService
     private readonly IDeskRepository _desks;
     private readonly IPreferenceRepository _preferences;
     private readonly ICurrentUserContext _currentUser;
+    private readonly IUserRepository _users;
+    private readonly IFloorRepository _floors;
 
     public ChatbotService(
         IReservationRepository reservations,
         IReservationService reservationService,
         IDeskRepository desks,
         IPreferenceRepository preferences,
-        ICurrentUserContext currentUser)
+        ICurrentUserContext currentUser,
+        IUserRepository users,
+        IFloorRepository floors)
     {
         _reservations = reservations;
         _reservationService = reservationService;
         _desks = desks;
         _preferences = preferences;
         _currentUser = currentUser;
+        _users = users;
+        _floors = floors;
     }
 
     // ---------------------------------------------------------------- Intents catalogue
@@ -346,18 +353,16 @@ public class ChatbotService : IChatbotService
     /// </remarks>
     public async Task<IReadOnlyList<DeskSuggestion>> GetTeamDesksAsync(DateOnly date, string? colleagueId, int limit, CancellationToken ct = default)
     {
-        var preference = await _preferences.GetByUserAsync(_currentUser.RequireUserId(), ct);
-        if (preference?.PreferredFloorId is not { } floorId)
+        var userId = _currentUser.RequireUserId();
+
+        // Get desks from user's assigned office
+        var user = await _users.GetByIdAsync(userId, ct);
+        if (user?.CurrentOfficeId is null)
         {
             return [];
         }
 
-        var availability = await _reservations.GetFloorAvailabilityAsync(floorId, date, ct);
-        return availability
-            .Where(a => a.IsFree)
-            .Take(limit)
-            .Select(a => Suggestion(a.Desk.ToDto(), "Free on your preferred floor"))
-            .ToList();
+        return await GetFreeDesksFromOfficeAsync(user.CurrentOfficeId, date, limit, ct);
     }
 
     public async Task<DeskLookupResult?> LookupDeskAsync(string seatNumber, DateOnly date, bool fallbackToAvailable, CancellationToken ct = default)
@@ -386,6 +391,37 @@ public class ChatbotService : IChatbotService
     {
         var history = await _reservations.GetHistoryForUserAsync(_currentUser.RequireUserId(), sinceDays, ct);
         return history.Select(h => h.ToWithDeskDto()).ToList();
+    }
+
+    public async Task<IReadOnlyList<DeskSuggestion>> GetFreeDesksFromOfficeAsync(string officeId, DateOnly date, int limit, CancellationToken ct = default)
+    {
+        // Get all floors in the office
+        var floors = await _floors.ListByOfficeAsync(officeId, ct);
+        if (floors.Count == 0)
+        {
+            return [];
+        }
+
+        // Get free desks from all floors
+        var allFreeDesks = new List<DeskSuggestion>();
+        foreach (var floor in floors)
+        {
+            var availability = await _reservations.GetFloorAvailabilityAsync(floor.Id, date, ct);
+            var freeDesks = availability
+                .Where(a => a.IsFree)
+                .Select(a => Suggestion(a.Desk.ToDto(), $"Free on {floor.Name}"))
+                .ToList();
+
+            allFreeDesks.AddRange(freeDesks);
+
+            // Stop if we've collected enough desks
+            if (allFreeDesks.Count >= limit)
+            {
+                break;
+            }
+        }
+
+        return allFreeDesks.Take(limit).ToList();
     }
 
     // ---------------------------------------------------------------- Helpers
