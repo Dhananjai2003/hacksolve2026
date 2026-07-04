@@ -13,11 +13,12 @@ public class RecommendationsController : ApiControllerBase
     public RecommendationsController(IRecommendationService recommendations) => _recommendations = recommendations;
 
     /// <summary>
-    /// Get my recommended desk ids for today (current office): most-reserved desk of the
-    /// previous month first when free, then desks free today that match my seat preferences.
+    /// Get my recommended desks for today (current office): most-reserved desk of the previous
+    /// month first when free, then desks free today that match my seat preferences. Each item is
+    /// the desk (with its quality ids) and its availability.
     /// </summary>
     [HttpGet("/me/recommendations")]
-    [ProducesResponseType(typeof(IEnumerable<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<DeskAvailability>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMyRecommendations(CancellationToken ct)
         => Ok(await _recommendations.GetMyRecommendationsAsync(ct));
 }

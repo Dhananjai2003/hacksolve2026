@@ -1,3 +1,4 @@
+using Seatgenie.Api.Models;
 using Seatgenie.Api.Repositories;
 
 namespace Seatgenie.Api.Services;
@@ -5,12 +6,12 @@ namespace Seatgenie.Api.Services;
 public interface IRecommendationService
 {
     /// <summary>
-    /// Recommend preferred desk ids for the current user, in the user's current office:
-    /// their most-reserved desk of the previous calendar month first (if free today),
-    /// followed by other desks free today whose qualities match the user's seat preferences.
-    /// Falls back to the first available seat when the user has no history or no preferences.
+    /// Recommend desks for the current user, in the user's current office: their most-reserved
+    /// desk of the previous calendar month first (if free today), followed by other desks free
+    /// today whose qualities match the user's seat preferences. Falls back to the first available
+    /// seat when the user has no history or no preferences. Every returned desk is free today.
     /// </summary>
-    Task<IReadOnlyList<string>> GetMyRecommendationsAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<DeskAvailability>> GetMyRecommendationsAsync(CancellationToken ct = default);
 }
 
 public class RecommendationService : IRecommendationService
@@ -35,7 +36,7 @@ public class RecommendationService : IRecommendationService
         _currentUser = currentUser;
     }
 
-    public async Task<IReadOnlyList<string>> GetMyRecommendationsAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<DeskAvailability>> GetMyRecommendationsAsync(CancellationToken ct = default)
     {
         var userId = _currentUser.RequireUserId();
 
@@ -55,6 +56,8 @@ public class RecommendationService : IRecommendationService
         {
             return [];
         }
+
+        var candidateById = candidateDesks.ToDictionary(d => d.Id);
 
         // Which of those desks are free today.
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -78,6 +81,10 @@ public class RecommendationService : IRecommendationService
 
         var firstAvailableId = availableDesks.OrderBy(d => d.PublicDeskId).First().Id;
 
+        // Every recommended desk is free today, so IsFree is always true here.
+        IReadOnlyList<DeskAvailability> ToSuggestions(IEnumerable<string> deskIds) =>
+            deskIds.Select(id => new DeskAvailability { Desk = candidateById[id].ToDto(), IsFree = true }).ToList();
+
         // User's preferred desk qualities and their most-reserved desk last calendar month.
         var preferredQualityIds = (await _seatPreferences.GetByUserAsync(userId, ct))
             .Select(p => p.QualityId)
@@ -89,7 +96,7 @@ public class RecommendationService : IRecommendationService
         // No history or no preferences → just the first available seat.
         if (preferredQualityIds.Count == 0 || mostReservedDeskId is null)
         {
-            return [firstAvailableId];
+            return ToSuggestions([firstAvailableId]);
         }
 
         // Available desks that share at least one preferred quality, best match first.
@@ -107,22 +114,22 @@ public class RecommendationService : IRecommendationService
             .ToList();
 
         // Most-reserved desk first (only if it's in this office and free today), then matches.
-        var result = new List<string>();
+        var orderedIds = new List<string>();
         if (freeDeskIds.Contains(mostReservedDeskId))
         {
-            result.Add(mostReservedDeskId);
+            orderedIds.Add(mostReservedDeskId);
         }
 
         foreach (var id in preferenceMatches)
         {
-            if (!result.Contains(id))
+            if (!orderedIds.Contains(id))
             {
-                result.Add(id);
+                orderedIds.Add(id);
             }
         }
 
         // Nothing personalised was available → fall back to the first available seat.
-        return result.Count > 0 ? result : [firstAvailableId];
+        return ToSuggestions(orderedIds.Count > 0 ? orderedIds : [firstAvailableId]);
     }
 
     /// <summary>[first day of last month 00:00 UTC, first day of this month 00:00 UTC).</summary>
